@@ -1,6 +1,7 @@
 {-
 TODO:
 
+- Add a "remove" option which strips a date.
 - Proper command line options:
     - Custom date/time format
     - Custom separator between stamp and original name
