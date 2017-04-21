@@ -22,6 +22,7 @@ import Path
 import Path.IO
 import System.Directory (renameDirectory)
 import System.Environment
+import System.FilePath (replaceBaseName, takeBaseName)
 import Options
 
 
@@ -33,9 +34,20 @@ main = do
     Today         -> mapM_ prependToday files
     Modification  -> mapM_ (prependFileDate getModificationTime) files
     Access        -> mapM_ (prependFileDate getAccessTime) files
-    Custom custom -> mapM_ (prepend custom) files
+    Custom stamp  -> mapM_ (addStamp (format options) stamp) files
     Remove        -> undefined
 
+
+addStamp :: Format -> String -> Path Abs File -> IO ()
+addStamp format stamp old = do
+  new <- parseAbsFile $ replaceBaseName (concat' [basename, sep, stamp]) $ toFilePath old
+  rename old new
+  where
+    basename = takeBaseName $ toFilePath old
+    sep = separator format
+    concat' = case position format of
+        Prepend -> concat
+        Append  -> concat . reverse
 
 prepend :: String -> Path Abs File -> IO ()
 prepend pre old = do
@@ -59,4 +71,4 @@ prependFileDate :: (Path Abs File -> IO UTCTime) -> Path Abs File -> IO ()
 prependFileDate f file = f file >>= flip prependDate file
 
 prependDate :: UTCTime -> Path Abs File -> IO ()
-prependDate time = prepend (formatTime defaultTimeLocale "%F" time)  -- TODO should use formatTime
+prependDate time = prepend (formatTime defaultTimeLocale "%F" time)

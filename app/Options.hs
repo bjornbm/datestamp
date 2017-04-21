@@ -9,7 +9,9 @@ import Options.Applicative
 
 -- Helpers
 infoh parser = info (helper <*> parser)
+commandh :: String -> Parser a -> InfoMod a -> Mod CommandFields a
 commandh name parser = command name . infoh parser
+commandhd :: String -> Parser a -> String -> Mod CommandFields a
 commandhd name parser = command name . infoh parser . progDesc
 -- txtOption = option (pack <$> str)
 strOptional = optional . strOption
@@ -28,20 +30,17 @@ data Position = Prepend | Append
 data Zone     = UTC | Local
 
 data Options = Options
-  { position   :: Position  -- Whether datestamp goes before or after filename
-  , zone       :: Zone      -- Time zone of datestamp
-  , format     :: String    -- Format of datestamp, excluding separator
-  , separator  :: String    -- Separator between datestamp and filename
+  { format     :: Format
   , optCommand :: Command
   , files      :: [FilePath]
   }
 
--- data Format = Format
---   { position  :: Position
---   , zone      :: Zone
---   , format    :: String
---   , separator :: String
---   }
+data Format = Format
+  { position  :: Position  -- Whether datestamp goes before or after filename
+  , zone      :: Zone      -- Time zone of datestamp
+  , formatStr :: String    -- Format of datestamp, excluding separator
+  , separator :: String    -- Separator between datestamp and filename
+  }
 
 data Command
   = Today
@@ -78,10 +77,10 @@ commandP = subparser
 filesP = someArguments "FILES"
 
 options = Options
-  <$> positionP
-  <*> zoneP
-  <*> formatP
-  <*> separatorP
+  <$> (Format <$> positionP
+              <*> zoneP
+              <*> formatP
+              <*> separatorP)
   <*> commandP
   <*> filesP
 

@@ -27,6 +27,7 @@ executable datestamp
   build-depends:       base
                      , datestamp
                      , directory
+                     , filepath
                      , optparse-applicative
                      , path
                      , path-io
