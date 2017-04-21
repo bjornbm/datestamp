@@ -30,17 +30,18 @@ main :: IO ()
 main = do
   options <- parseCommand
   files <- mapM resolveFile' $ files options
+  let fmt = format options
   case optCommand options of
-    Today         -> mapM_ prependToday files
-    Modification  -> mapM_ (prependFileDate getModificationTime) files
-    Access        -> mapM_ (prependFileDate getAccessTime) files
-    Custom stamp  -> mapM_ (addStamp (format options) stamp) files
-    Remove        -> undefined
+    Today        -> mapM_ (stampToday fmt) files
+    Modification -> mapM_ (stampFileDate fmt getModificationTime) files
+    Access       -> mapM_ (stampFileDate fmt getAccessTime) files
+    Custom stamp -> mapM_ (addStamp fmt stamp) files
+    Remove       -> undefined
 
 
 addStamp :: Format -> String -> Path Abs File -> IO ()
 addStamp format stamp old = do
-  new <- parseAbsFile $ replaceBaseName (concat' [basename, sep, stamp]) $ toFilePath old
+  new <- parseAbsFile $ replaceBaseName (toFilePath old) $ concat' [stamp, sep, basename]
   rename old new
   where
     basename = takeBaseName $ toFilePath old
@@ -49,14 +50,6 @@ addStamp format stamp old = do
         Prepend -> concat
         Append  -> concat . reverse
 
-prepend :: String -> Path Abs File -> IO ()
-prepend pre old = do
-  new <- parent old </$> parseRelFile (pre ++ sep ++ toFilePath (filename old))
-  rename old new
-  where
-    sep = " "  -- TODO Should come from options.
-    dir </$> file = (dir </>) <$> file
-
 rename :: Path Abs File -> Path Abs File -> IO ()
 rename old new = isLocationOccupied new >>= \case
   True  -> error $ "File aleady exists: " ++ show new
@@ -64,11 +57,11 @@ rename old new = isLocationOccupied new >>= \case
     True  -> renameFile old new
     False -> renameDirectory (toFilePath old) (toFilePath new) -- A directory!
 
-prependToday :: Path Abs File -> IO ()
-prependToday file = getCurrentTime >>= flip prependDate file
+stampToday :: Format -> Path Abs File -> IO ()
+stampToday fmt file = getCurrentTime >>= flip (stampDate fmt) file
 
-prependFileDate :: (Path Abs File -> IO UTCTime) -> Path Abs File -> IO ()
-prependFileDate f file = f file >>= flip prependDate file
+stampFileDate :: Format -> (Path Abs File -> IO UTCTime) -> Path Abs File -> IO ()
+stampFileDate fmt f file = f file >>= flip (stampDate fmt) file
 
-prependDate :: UTCTime -> Path Abs File -> IO ()
-prependDate time = prepend (formatTime defaultTimeLocale "%F" time)
+stampDate :: Format -> UTCTime -> Path Abs File -> IO ()
+stampDate fmt time = addStamp fmt (formatTime defaultTimeLocale (formatStr fmt) time)

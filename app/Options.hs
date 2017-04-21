@@ -26,21 +26,21 @@ someArguments = some . argument str . metavar
 -- strArgument = argument str . metavassr
 
 
-data Position = Prepend | Append
-data Zone     = UTC | Local
+data Position = Prepend | Append deriving (Show)
+data Zone     = UTC | Local deriving (Show)
 
 data Options = Options
   { format     :: Format
   , optCommand :: Command
   , files      :: [FilePath]
-  }
+  } deriving (Show)
 
 data Format = Format
   { position  :: Position  -- Whether datestamp goes before or after filename
   , zone      :: Zone      -- Time zone of datestamp
   , formatStr :: String    -- Format of datestamp, excluding separator
   , separator :: String    -- Separator between datestamp and filename
-  }
+  } deriving (Show)
 
 data Command
   = Today
@@ -50,6 +50,7 @@ data Command
   -- | Addition
   | Custom String
   | Remove
+  deriving (Show)
 
 
 zoneP = switch (lsh "utc"   'z' "UTC time")   *> pure UTC
