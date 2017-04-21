@@ -17,6 +17,7 @@ module Main where
 import Control.Monad ((<=<))
 import Data.Time.Clock
 import Data.Time.Format
+import Data.Time.LocalTime --(utcToLocalZonedTime)
 import Lib
 import Path
 import Path.IO
@@ -36,7 +37,7 @@ main = do
     Modification -> mapM_ (stampFileDate fmt getModificationTime) files
     Access       -> mapM_ (stampFileDate fmt getAccessTime) files
     Custom stamp -> mapM_ (addStamp fmt stamp) files
-    Remove       -> undefined
+    Remove       -> mapM_ (removeStamp fmt) files
 
 
 addStamp :: Format -> String -> Path Abs File -> IO ()
@@ -64,4 +65,11 @@ stampFileDate :: Format -> (Path Abs File -> IO UTCTime) -> Path Abs File -> IO 
 stampFileDate fmt f file = f file >>= flip (stampDate fmt) file
 
 stampDate :: Format -> UTCTime -> Path Abs File -> IO ()
-stampDate fmt time = addStamp fmt (formatTime defaultTimeLocale (formatStr fmt) time)
+stampDate fmt time file = case zone fmt of
+  UTC   -> addStamp' time
+  Local -> addStamp' . zonedTimeToLocalTime =<< utcToLocalZonedTime time
+  where
+    addStamp' t = addStamp fmt (formatTime defaultTimeLocale (formatStr fmt) t) file
+
+removeStamp :: Format -> Path Abs File -> IO ()
+removeStamp fmt file = undefined

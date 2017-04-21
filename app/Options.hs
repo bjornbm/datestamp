@@ -55,7 +55,7 @@ data Command
 
 zoneP = switch (lsh "utc"   'z' "UTC time")   *> pure UTC
     <|> switch (lsh "local" 'l' "Local time") *> pure Local
-    <|> pure UTC
+    <|> pure Local
 
 formatP = strOption (lsmh "format" 'f' "FORMAT" "Datestamp formatting string (time lib)")
       <|> pure "%F"  -- use default?
