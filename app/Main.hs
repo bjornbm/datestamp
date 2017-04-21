@@ -16,25 +16,26 @@ module Main where
 
 import Control.Monad ((<=<))
 import Data.Time.Clock
+import Data.Time.Format
 import Lib
 import Path
 import Path.IO
 import System.Directory (renameDirectory)
 import System.Environment
+import Options
+
 
 main :: IO ()
 main = do
-  (date:files) <- getArgs
-  mapM_ (process date <=< resolveFile') files
+  options <- parseCommand
+  files <- mapM resolveFile' $ files options
+  case optCommand options of
+    Today         -> mapM_ prependToday files
+    Modification  -> mapM_ (prependFileDate getModificationTime) files
+    Access        -> mapM_ (prependFileDate getAccessTime) files
+    Custom custom -> mapM_ (prepend custom) files
+    Remove        -> undefined
 
-process :: String -> Path Abs File -> IO ()
-process date file = case date of
-  "today"        -> prependToday file
-  "modification" -> prependFileDate getModificationTime file
-  "access"       -> prependFileDate getAccessTime file
-  -- "creation"     -> error "Not implemented"
-  -- "addition"     -> error "Not implemented"
-  custom         -> prepend custom file
 
 prepend :: String -> Path Abs File -> IO ()
 prepend pre old = do
@@ -58,4 +59,4 @@ prependFileDate :: (Path Abs File -> IO UTCTime) -> Path Abs File -> IO ()
 prependFileDate f file = f file >>= flip prependDate file
 
 prependDate :: UTCTime -> Path Abs File -> IO ()
-prependDate time = prepend (show $ utctDay time)  -- TODO should use formatTime
+prependDate time = prepend (formatTime defaultTimeLocale "%F" time)  -- TODO should use formatTime
