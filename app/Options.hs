@@ -40,6 +40,7 @@ data Format = Format
   , zone      :: Zone      -- Time zone of datestamp
   , formatStr :: String    -- Format of datestamp, excluding separator
   , separator :: String    -- Separator between datestamp and filename
+  , toggle     :: Bool
   } deriving (Show)
 
 data Command
@@ -67,6 +68,8 @@ positionP = switch (lsh "prepend" 'p' "Add datestamp before filename") *> pure P
         <|> switch (lsh "append"  'a' "Add datestamp after filename")  *> pure Append
         <|> pure Prepend
 
+toggleP = switch (lsh "toggle" 't' "Toggle datestamp.")
+
 commandP = subparser
   (  commandhd "today"        (pure Today)        "Stamp with today's date"
   <> commandhd "modification" (pure Modification) "Stamp with file modification date"
@@ -81,7 +84,8 @@ options = Options
   <$> (Format <$> positionP
               <*> zoneP
               <*> formatP
-              <*> separatorP)
+              <*> separatorP
+              <*> toggleP)
   <*> commandP
   <*> filesP
 
