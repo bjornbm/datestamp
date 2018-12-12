@@ -14,8 +14,10 @@ commandh name parser = command name . infoh parser
 commandhd :: String -> Parser a -> String -> Mod CommandFields a
 commandhd name parser = command name . infoh parser . progDesc
 -- txtOption = option (pack <$> str)
+strOptional :: Mod OptionFields String -> Parser (Maybe String)
 strOptional = optional . strOption
 -- txtOptional = optional . txtOption
+manyStrOpts :: Mod OptionFields String -> Parser [String]
 manyStrOpts = many . strOption
 -- manyTxtOpts = many . txtOption
 lsh l s h = long l <> short s <> help h
